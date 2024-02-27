@@ -9,7 +9,7 @@ Ce projet fournit un script Python pour automatiser la fusion de multiples fichi
 - **Détection automatique des nouveaux fichiers Excel** : Identifie les nouveaux fichiers basés sur un motif spécifique dans un répertoire donné.
 - **Fusion des données** : Combine les données de plusieurs fichiers Excel dans un seul fichier.
 - **Gestion des états de fichiers** : Garde une trace des fichiers déjà traités pour éviter les traitements répétitifs.
-- **Nettoyage** : Supprime les fichiers sources après leur fusion pour maintenir l'organisation du répertoire.
+- **Nettoyage** : Déplace les fichiers sources après leur fusion vers un dossier de sauvegarde pour maintenir l'organisation du répertoire.
 
 ## Prérequis
 
@@ -38,17 +38,16 @@ python script_fusion_factures.py
 
 Assurez-vous que les fichiers Excel à fusionner correspondent au motif défini dans le script et sont placés dans le même répertoire que le script.
 
-## Structure du Projet
+ ## Structure du Projet
 
 - `script_fusion_factures.py` : Script principal pour la fusion des fichiers.
 - `files_state.json` : Stocke l'état des fichiers traités.
-- `fused_files.json` : Stocke les noms des fichiers déjà fusionnés.
+- `Gestion des états de fichiers` : Garde une trace des fichiers déjà traités pour éviter les traitements répétitifs.
+- `Nettoyage` : Déplace les fichiers sources après leur fusion vers un dossier de sauvegarde pour maintenir l'organisation du répertoire.
 
-## Analyse et Tests
+## Analyse 
 
-### Analyse de Code
 
-Il est recommandé d'utiliser des outils tels que pylint ou flake8 pour analyser le code et s'assurer qu'il respecte les bonnes pratiques de codage en Python.
 
 
 ## Contribution
