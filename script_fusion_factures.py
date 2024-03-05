@@ -1,11 +1,5 @@
-import os
-import glob
-import pandas as pd
-import json
+import os,glob,pandas as pd,json,shutil,tqdm
 from collections import defaultdict
-import shutil  #déplacer des fichiers
-
-
 #######################################################################################
 #fusionne automatiquement des fichiers Excel de factures 
 #basés sur un motif de nom de fichier spécifique, 
@@ -20,9 +14,9 @@ def load_json(file_name):
             return json.load(f)
     except FileNotFoundError:
         return {}
-#############################################
-##auvegarde des données dans un fichier JSON.
-##############################################
+#######################################################################################
+##auvegarde des données dans un fichier JSON.                                         #
+#######################################################################################
 def save_json(file_name, data):
     with open(file_name, 'w') as f:
         json.dump(data, f)
@@ -95,43 +89,29 @@ missing_files = [file for file in previous_state if file not in current_state]
 
 ########################################################################################
 # Signaler les fichiers manquants
+# Utilisation de tqdm pour la barre de chargement lors du traitement des fichiers
 ########################################################################################
-if missing_files:
-    print("Fichier(s) manquant(s) depuis la dernière exécution :")
-    for file in missing_files:
-        print(file)
-####################################################################################
-# Gestion des Données dans les Fichiers Excel liés aux Transactions Commerciales   #
-####################################################################################
-#
-# Structure des données :
-# -----------------------
-# - Colonne "Invoice_Number" : Numéro de facture pour chaque transaction.
-# - Colonne "Buyer_TN" (Transaction Number de l'acheteur) : Identifiant de l'acheteur.
-#
-# Note Importante :
-# -----------------
-# Un même "Invoice_Number" peut être lié à un unique "Buyer_TN", mais correspondre à 
-# plusieurs "Transaction_Number". Cela indique la possibilité de réaliser plusieurs 
-# transactions sous une seule facture pour un acheteur donné.
-#
-# Exemple de Structure de Données :
-#  ------------------------------------------------
-# | Invoice_Number | Buyer_TN | Transaction_Number |
-# |----------------|----------|--------------------|
-# |     12345      |   TN001  |        TR001       |
-# |     12345      |   TN001  |        TR002       |
-# |     12346      |   TN002  |        TR003       |
-#  ------------------------------------------------
-#
-# Ce tableau montre que la facture 12345, liée à l'acheteur TN001, couvre deux transactions
-# distinctes (TR001 et TR002). Cela illustre la gestion flexible des transactions commerciales.
-transaction_file_mapping = defaultdict(list)
-for file in new_files:
-    df = pd.read_excel(file, sheet_name=0)
-    for index, row in df.iterrows():
-        transaction_no = row['TRANSACTION NO']
-        transaction_file_mapping[transaction_no].append((file, extract_file_number(file), index))
+
+with tqdm(total=len(new_files), desc="Analyse et traitement des fichiers") as pbar:
+    for file in new_files:
+        df = pd.read_excel(file, sheet_name=0)
+        if 'TRANSACTION NO' in df.columns:
+            transaction_column = 'TRANSACTION NO'
+        elif 'TRANSACTION NUMBER' in df.columns:
+            transaction_column = 'TRANSACTION NUMBER'
+        else:
+           # print(f"Ni 'TRANSACTION NO' ni 'TRANSACTION NUMBER' ne sont présents dans le fichier {file}. Vérification ignorée pour ce fichier.")
+            continue
+        
+        for index, row in df.iterrows():
+            if pd.isnull(row.iloc[0]):
+                continue
+            transaction_no = row[transaction_column]
+            transaction_file_mapping[transaction_no].append((file, extract_file_number(file), index))
+        
+        # Mise à jour de la barre de chargement après chaque fichier traité
+        pbar.update(1)
+
 #####################################################################
 # Sélectionner l'entrée avec le numéro de fichier le plus élevé
 #####################################################################
@@ -164,8 +144,10 @@ if data_frames:
     print(f"Les nouveaux fichiers ont été fusionnés dans {output_file}.")
 else:
     print("Aucun nouveau fichier à fusionner.")
+####################################################################################
+# Fin du script de fusion des fichiers Excel                                       #
+####################################################################################
 
-# Sauvegarder les fichiers fusionnés
 save_json(fused_files_file, fused_files)
 
 for file, index in selected_entries:
